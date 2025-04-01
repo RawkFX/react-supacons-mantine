@@ -1,5 +1,5 @@
 import React from 'react';
-interface Props {
+export interface Props {
     onSelect?: (iconName: string) => void;
     config?: {
         resultsPerPage?: number;
@@ -16,6 +16,11 @@ interface Props {
         showBothIconAndText?: boolean;
         noIconsFoundText?: string;
     };
+}
+export interface IconType {
+    name: string;
+    type: string;
+    subtypes: string[];
 }
 declare const PopoverSearchIcon: React.FC<Props>;
 export default PopoverSearchIcon;

@@ -12,8 +12,9 @@
     "esModuleInterop": true,
     "declaration": true,
     "declarationDir": "./dist",
-    "emitDeclarationOnly": true
+    "emitDeclarationOnly": false
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "**/*.spec.ts"]
+  "typeRoots": ["./node_modules/@types", "./src"],
+  "include": ["./src", "src/index.d.ts"],
+  "exclude": ["node_modules", "**/*.spec.ts", "**/*.test.ts", "**/*.test.tsx"]
 }

@@ -4,7 +4,7 @@ import Icon from "./components/Icon";
 import Clipboard from "clipboard";
 import { useDebouncedValue } from "@mantine/hooks";
 
-interface Props {
+export interface Props {
     onSelect?: (iconName: string) => void;
     config?: {
         resultsPerPage?: number;
@@ -23,7 +23,7 @@ interface Props {
     };
 }
 
-interface IconType {
+export interface IconType {
     name: string;
     type: string;
     subtypes: string[];
