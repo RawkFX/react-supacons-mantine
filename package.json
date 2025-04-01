@@ -1,12 +1,17 @@
 {
   "name": "react-supacons-mantine",
-  "version": "1.0.1",
+  "version": "1.0.4",
   "description": "React icon selector component that integrates with the Supacons Core Icon Library",
-  "main": "index.tsx",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "jest && tsc --declaration --emitDeclarationOnly && tsc && cp -r src/dist/css dist/dist/css",
     "test": "jest"
   },
+  "files": [
+    "dist/**/*",
+    "dist/css/**/*"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/RawkFX/react-supacons-mantine.git"
