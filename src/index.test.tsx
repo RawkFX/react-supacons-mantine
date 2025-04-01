@@ -35,7 +35,7 @@ describe('PopoverSearchIcon Component', () => {
 
     test('calls onClick with the correct icon name', async () => {
         const handleClick = jest.fn();
-        renderWithMantineProvider(<PopoverSearchIcon onClick={handleClick} />);
+        renderWithMantineProvider(<PopoverSearchIcon onSelect={handleClick} />);
         fireEvent.click(screen.getByText('Select Icon'));
         await waitFor(() => expect(screen.getByPlaceholderText('Search icons')).toBeInTheDocument());
 

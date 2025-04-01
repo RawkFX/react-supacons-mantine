@@ -1,11 +1,26 @@
-import React, {useEffect, useMemo, useState} from 'react';
-import {Box, Button, Divider, Grid, Input, Loader, Popover} from "@mantine/core";
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import { Box, Button, Divider, Grid, Input, Loader, Popover } from "@mantine/core";
 import Icon from "./components/Icon";
 import Clipboard from "clipboard";
-import {useDebouncedValue} from "@mantine/hooks";
+import { useDebouncedValue } from "@mantine/hooks";
 
 interface Props {
-    onClick?: (data: any) => void;
+    onSelect?: (iconName: string) => void;
+    config?: {
+        resultsPerPage?: number;
+        availableStyles?: string[];
+        contentColor?: string;
+        contentSize?: number;
+        searchLabel?: string;
+        paginationLabel?: string;
+        buttonLabel?: string;
+        buttonIconName?: string;
+        buttonIconSize?: number;
+        buttonIconColor?: string;
+        buttonColor?: string;
+        showBothIconAndText?: boolean;
+        noIconsFoundText?: string;
+    };
 }
 
 interface IconType {
@@ -14,43 +29,63 @@ interface IconType {
     subtypes: string[];
 }
 
-const iconSubtypes: string[] = ["solid", "regular", "light", "thin", "duotone"];
+const DEFAULT_ICON_SUBTYPES = ["solid", "regular", "light", "thin", "duotone"];
+const DEFAULT_ICONS_PER_PAGE = 48;
 
+// Move this outside component to avoid recreation on each render
 const copier = (icon: string) => {
     new Clipboard("#copy", {
         text: () => icon,
     });
 };
 
+// Cache promise to avoid duplicate requests
+let iconsPromise: Promise<{ generic: IconType[]; brands: IconType[] }> | null = null;
+
 const getIcons = async (): Promise<{ generic: IconType[]; brands: IconType[] }> => {
-    const generic_icons = (await import("./icons/generic_icons.json")).default;
-    const brand_icons = (await import("./icons/brand_icons.json")).default;
+    if (!iconsPromise) {
+        iconsPromise = Promise.all([
+            import("./icons/generic_icons.json"),
+            import("./icons/brand_icons.json")
+        ]).then(([genericModule, brandModule]) => {
+            const generic_icons = genericModule.default;
+            const brand_icons = brandModule.default;
 
-    const convertToArray = (icons: { [key: string]: string }, type: string): IconType[] => {
-        return Object.keys(icons).map((name) => ({
-            name, type, subtypes: [], // Add appropriate subtypes if needed
-        }));
-    };
+            const convertToArray = (icons: { [key: string]: string }, type: string): IconType[] => {
+                return Object.keys(icons).map((name) => ({
+                    name, type, subtypes: [],
+                }));
+            };
 
-    return {
-        generic: convertToArray(generic_icons, "generic"), brands: convertToArray(brand_icons, "brands"),
-    };
+            return {
+                generic: convertToArray(generic_icons, "generic"),
+                brands: convertToArray(brand_icons, "brands"),
+            };
+        });
+    }
+    return iconsPromise;
 };
 
-const Index: React.FC<Props> = ({onClick}) => {
+const PopoverSearchIcon: React.FC<Props> = ({ onSelect, config }) => {
     const [allIcons, setAllIcons] = useState<IconType[]>([]);
     const [search, setSearch] = useState<string>("");
     const [debouncedSearch] = useDebouncedValue(search, 500);
     const [popoverOpened, setPopoverOpened] = useState<boolean>(false);
     const [currentPage, setCurrentPage] = useState<number>(1);
-    const [selectedSubtype, setSelectedSubtype] = useState<string>(iconSubtypes[0]);
-    const iconsPerPage = 48;
+    const [loading, setLoading] = useState<boolean>(true);
 
+    const iconSubtypes = config?.availableStyles || DEFAULT_ICON_SUBTYPES;
+    const defaultSubtype = iconSubtypes[0] || DEFAULT_ICON_SUBTYPES[0];
+    const [selectedSubtype, setSelectedSubtype] = useState<string>(defaultSubtype);
+    const iconsPerPage = config?.resultsPerPage || DEFAULT_ICONS_PER_PAGE;
+
+    // Memoize filtered icons
     const filteredIcons = useMemo(() => {
         const searchTerm = debouncedSearch.toLowerCase().replace(/[-_\s]/g, "");
-        return allIcons.filter(({name}) => name.toLowerCase().includes(searchTerm));
+        return allIcons.filter(({ name }) => name.toLowerCase().includes(searchTerm));
     }, [debouncedSearch, allIcons]);
 
+    // Memoize grouped icons by subtype
     const groupedIcons = useMemo(() => {
         return filteredIcons.reduce((acc, icon) => {
             icon.subtypes.forEach(subtype => {
@@ -63,145 +98,212 @@ const Index: React.FC<Props> = ({onClick}) => {
         }, {} as { [key: string]: IconType[] });
     }, [filteredIcons]);
 
-    const handleIconClick = (iconName: string) => {
-        if (onClick) {
-            onClick(iconName);
-        }
-    };
+    // Memoize current page icons
+    const currentPageIcons = useMemo(() => {
+        const start = (currentPage - 1) * iconsPerPage;
+        const end = currentPage * iconsPerPage;
+        return groupedIcons[selectedSubtype]?.slice(start, end) || [];
+    }, [groupedIcons, selectedSubtype, currentPage, iconsPerPage]);
 
-    const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+    // Use useCallback for handlers
+    const handleIconClick = useCallback((iconName: string) => {
+        onSelect?.(iconName);
+    }, [onSelect]);
 
+    const paginate = useCallback((pageNumber: number) => {
+        setCurrentPage(pageNumber);
+    }, []);
+
+    const handleSubtypeChange = useCallback((subtype: string) => {
+        setCurrentPage(1);
+        setSelectedSubtype(subtype);
+    }, []);
+
+    const handlePopoverOpen = useCallback(() => {
+        setSearch("");
+        setSelectedSubtype(defaultSubtype);
+        setTimeout(() => {
+            setPopoverOpened(true);
+        }, 300);
+    }, [defaultSubtype]);
+
+    const handlePopoverClose = useCallback(() => {
+        setPopoverOpened(false);
+    }, []);
+
+    const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearch(e.currentTarget.value);
+        setCurrentPage(1);
+    }, []);
+
+    // Load icons when popover opens
     useEffect(() => {
+        if (!popoverOpened) return;
+
+        setLoading(true);
+
         const fetchIcons = async () => {
-            const icons = await getIcons();
-            const flattenIcons: IconType[] = [
-                ...icons.generic.map(icon => ({
-                    ...icon, type: "classic", subtypes: iconSubtypes
-                })),
-                ...icons.brands.map(icon => ({
-                    ...icon, type: "brands", subtypes: ["brands"]
-                }))
-            ];
-            setAllIcons(flattenIcons);
+            try {
+                const icons = await getIcons();
+                const flattenIcons: IconType[] = [
+                    ...icons.generic.map(icon => ({
+                        ...icon, type: "classic", subtypes: DEFAULT_ICON_SUBTYPES
+                    })),
+                    ...icons.brands.map(icon => ({
+                        ...icon, type: "brands", subtypes: ["brands"]
+                    }))
+                ];
+                setAllIcons(flattenIcons);
+            } catch (error) {
+                console.error("Failed to load icons:", error);
+            } finally {
+                setLoading(false);
+            }
         };
 
-        if (popoverOpened) fetchIcons();
+        fetchIcons();
     }, [popoverOpened]);
 
+    // Update selected subtype when search changes
     useEffect(() => {
         if (filteredIcons.length < 1) return;
 
-        const firstSubtype = filteredIcons[0].subtypes[0];
-        if (firstSubtype && firstSubtype !== selectedSubtype) setSelectedSubtype(firstSubtype);
-    }, [debouncedSearch, allIcons]);
+        const availableSubtypes = Object.keys(groupedIcons);
+        if (availableSubtypes.length > 0 && !availableSubtypes.includes(selectedSubtype)) {
+            setSelectedSubtype(availableSubtypes[0]);
+        }
+    }, [debouncedSearch, groupedIcons, selectedSubtype, filteredIcons.length]);
+
+    // Memoize the button content
+    const buttonContent = useMemo(() => {
+        if (config?.showBothIconAndText && config?.buttonIconName) {
+            return (
+                <>
+                    <Icon
+                        name={config.buttonIconName}
+                        size={config.buttonIconSize}
+                        color={config.buttonIconColor}
+                        type="solid"
+                        subtypes={[]}
+                        currentSubtype="solid"
+                        clipboard={{ copier }}
+                    />
+                    <span style={{ marginLeft: "10px" }}>{config?.buttonLabel || "Select Icon"}</span>
+                </>
+            );
+        } else if (!config?.showBothIconAndText && config?.buttonIconName) {
+            return (
+                <Icon
+                    name={config.buttonIconName}
+                    size={config.buttonIconSize}
+                    color={config.buttonIconColor}
+                    type="solid"
+                    subtypes={[]}
+                    currentSubtype="solid"
+                    clipboard={{ copier }}
+                />
+            );
+        }
+        return config?.buttonLabel || "Select Icon";
+    }, [config]);
+
+    // Fixed icons for navigation and subtype indicators
+    const subtypeIndicatorIcons = useMemo(() => {
+        const indicators: Record<string, string> = {
+            brands: "chrome",
+            default: "apartment"
+        };
+
+        return Object.keys(groupedIcons).map(subtype => ({
+            subtype,
+            iconName: subtype === "brands" ? indicators.brands : indicators.default
+        }));
+    }, [groupedIcons]);
 
     return (
-        <Popover shadow="md" width={500} onOpen={() => {
-            if (search !== "") setSearch("");
-            if (selectedSubtype !== iconSubtypes[0]) setSelectedSubtype(iconSubtypes[0]);
-            setTimeout(() => {
-                setPopoverOpened(true)
-            }, 300);
-        }} onClose={() => setPopoverOpened(false)}>
+        <Popover
+            shadow="md"
+            width={500}
+            onOpen={handlePopoverOpen}
+            onClose={handlePopoverClose}
+            position="bottom-start"
+        >
             <Popover.Target>
-                <Button>Select Icon</Button>
+                <Button style={{ backgroundColor: config?.buttonColor }}>{buttonContent}</Button>
             </Popover.Target>
 
             <Popover.Dropdown>
                 <Input
-                    placeholder="Search icons"
+                    placeholder={config?.searchLabel || "Search icons"}
                     value={search}
-                    onChange={(e) => {
-                        setSearch(e.currentTarget.value);
-                        setCurrentPage(1);
-                    }}
+                    onChange={handleSearchChange}
                 />
                 <Box style={{position: "relative", width: "100%", minHeight: "20vh"}}>
-                    {!popoverOpened && (
-                        <Box
-                            style={{position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)"}}>
+                    {loading && (
+                        <Box style={{position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)"}}>
                             <Loader/>
                         </Box>
                     )}
 
-                    {Object.keys(groupedIcons).map((subtype, index) => (
-                        <div key={index}>
-                            {subtype === selectedSubtype && groupedIcons[subtype].slice((currentPage - 1) * iconsPerPage, currentPage * iconsPerPage).length > 0 && (
-                                <>
-                                    <h3>{subtype.charAt(0).toUpperCase() + subtype.slice(1)}</h3>
-                                    <Grid>
-                                        {groupedIcons[subtype].slice((currentPage - 1) * iconsPerPage, currentPage * iconsPerPage).map((icon, i) => (
-                                            <Grid.Col span={1} key={i}>
-                                                <div
-                                                    key={i}
-                                                    onClick={() => handleIconClick(icon.name)}
-                                                    style={{cursor: "pointer", textAlign: "center"}}
-                                                >
-                                                    <Icon
-                                                        name={icon.name}
-                                                        type={icon.type}
-                                                        subtypes={icon.subtypes}
-                                                        currentSubtype={subtype}
-                                                        clipboard={{copier}}
-                                                    />
-                                                </div>
-                                            </Grid.Col>
-                                        ))}
-                                    </Grid>
-                                </>
-                            )}
-                        </div>
-                    ))}
+                    {!loading && Object.keys(groupedIcons).length > 0 && groupedIcons[selectedSubtype]?.length > 0 && (
+                        <>
+                            <h3>{selectedSubtype.charAt(0).toUpperCase() + selectedSubtype.slice(1)}</h3>
+                            <Grid>
+                                {currentPageIcons.map((icon, i) => (
+                                    <Grid.Col span="auto" key={i}>
+                                        <div
+                                            onClick={() => handleIconClick(icon.name)}
+                                            style={{cursor: "pointer", textAlign: "center"}}
+                                        >
+                                            <Icon
+                                                name={icon.name}
+                                                type={icon.type}
+                                                size={config?.contentSize}
+                                                color={config?.contentColor}
+                                                subtypes={icon.subtypes}
+                                                currentSubtype={selectedSubtype}
+                                                clipboard={{copier}}
+                                            />
+                                        </div>
+                                    </Grid.Col>
+                                ))}
+                            </Grid>
+                        </>
+                    )}
 
-                    {(filteredIcons.length === 0 || allIcons.length === 0) && (
-                        <Box
-                            style={{position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)"}}>
-                            <h3>No icons found</h3>
+                    {!loading && (filteredIcons.length === 0 || allIcons.length === 0) && (
+                        <Box style={{position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)"}}>
+                            <h3>{config?.noIconsFoundText || "No icons found"}</h3>
                         </Box>
                     )}
 
-
-                    {Object.keys(groupedIcons).length > 0 && (
+                    {!loading && Object.keys(groupedIcons).length > 0 && (
                         <Grid justify="center" style={{paddingTop: "5%"}}>
                             <Divider style={{width: "100%"}}/>
-                            {Object.keys(groupedIcons).map((subtype, index) => (
-                                <Grid.Col span={1} key={index}>
+                            {subtypeIndicatorIcons.map(({ subtype, iconName }) => (
+                                <Grid.Col span={1} key={subtype}>
                                     <Box
                                         style={{
                                             cursor: "pointer",
                                             textAlign: "center",
                                             backgroundColor: subtype === selectedSubtype ? "lightgray" : "transparent"
                                         }}
-                                        onClick={() => {
-                                            setCurrentPage(1);
-                                            setSelectedSubtype(subtype);
-                                        }}
+                                        onClick={() => handleSubtypeChange(subtype)}
                                     >
-                                        {subtype === "brands" ?
-                                            allIcons.filter(icon => icon.name === "chrome" && icon.subtypes.includes(subtype))
-                                                .map((icon, i) => (
-                                                    <Icon
-                                                        key={i}
-                                                        name={icon.name}
-                                                        type={icon.type}
-                                                        subtypes={icon.subtypes}
-                                                        currentSubtype={subtype}
-                                                        clipboard={{copier}}
-                                                    />
-                                                ))
-                                            :
-                                            allIcons
-                                                .filter(icon => icon.name === "apartment" && icon.subtypes.includes(subtype))
-                                                .map((icon, i) => (
-                                                    <Icon
-                                                        key={i}
-                                                        name={icon.name}
-                                                        type={icon.type}
-                                                        subtypes={icon.subtypes}
-                                                        currentSubtype={subtype}
-                                                        clipboard={{copier}}
-                                                    />
-                                                ))}
+                                        {allIcons
+                                            .filter(icon => icon.name === iconName && icon.subtypes.includes(subtype))
+                                            .map((icon, i) => (
+                                                <Icon
+                                                    key={i}
+                                                    name={icon.name}
+                                                    type={icon.type}
+                                                    size={config?.contentSize}
+                                                    color={config?.contentColor}
+                                                    subtypes={icon.subtypes}
+                                                    currentSubtype={subtype}
+                                                    clipboard={{copier}}
+                                                />
+                                            ))}
                                     </Box>
                                 </Grid.Col>
                             ))}
@@ -209,9 +311,10 @@ const Index: React.FC<Props> = ({onClick}) => {
                         </Grid>
                     )}
 
-                    {filteredIcons.length > iconsPerPage && (
+                    {!loading && filteredIcons.length > iconsPerPage && (
                         <div style={{display: "flex", justifyContent: "space-around", paddingTop: "5%"}}>
                             <Button
+                                style={{ backgroundColor: config?.buttonColor }}
                                 onClick={() => paginate(currentPage - 1)}
                                 disabled={currentPage === 1}
                             >
@@ -222,6 +325,8 @@ const Index: React.FC<Props> = ({onClick}) => {
                                             key={i}
                                             name={icon.name}
                                             type={icon.type}
+                                            size={config?.contentSize}
+                                            color={config?.buttonIconColor}
                                             subtypes={icon.subtypes}
                                             currentSubtype="solid"
                                             clipboard={{copier}}
@@ -229,9 +334,10 @@ const Index: React.FC<Props> = ({onClick}) => {
                                     ))}
                             </Button>
                             <span>
-                                Page {currentPage} of {Math.ceil(filteredIcons.length / iconsPerPage)}
+                                {config?.paginationLabel?.replace("%d", currentPage.toString()).replace("%s", Math.ceil(filteredIcons.length / iconsPerPage).toString()) || `Page ${currentPage} of ${Math.ceil(filteredIcons.length / iconsPerPage)}`}
                             </span>
                             <Button
+                                style={{ backgroundColor: config?.buttonColor }}
                                 onClick={() => paginate(currentPage + 1)}
                                 disabled={currentPage * iconsPerPage >= filteredIcons.length}
                             >
@@ -242,6 +348,8 @@ const Index: React.FC<Props> = ({onClick}) => {
                                             key={i}
                                             name={icon.name}
                                             type={icon.type}
+                                            size={config?.contentSize}
+                                            color={config?.buttonIconColor}
                                             subtypes={icon.subtypes}
                                             currentSubtype="solid"
                                             clipboard={{copier}}
@@ -256,4 +364,4 @@ const Index: React.FC<Props> = ({onClick}) => {
     );
 };
 
-export default Index;
+export default PopoverSearchIcon;
