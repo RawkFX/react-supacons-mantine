@@ -1,3 +1,1 @@
-import PopoverSearchIcon from "./dist";
-
-export default PopoverSearchIcon;
+export { default as PopoverSearchIcon } from "./dist/index";

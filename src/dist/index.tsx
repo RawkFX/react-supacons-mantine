@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Box, Button, Divider, Grid, Input, Loader, Popover } from "@mantine/core";
-import Icon from "./components/Icon";
 import Clipboard from "clipboard";
 import { useDebouncedValue } from "@mantine/hooks";
 
-export interface Props {
+interface Props {
     onSelect?: (iconName: string) => void;
     config?: {
         resultsPerPage?: number;
@@ -23,7 +22,19 @@ export interface Props {
     };
 }
 
-export interface IconType {
+interface IconProps {
+    name: string;
+    type: string;
+    subtypes: string[];
+    currentSubtype: string;
+    size?: number;
+    color?: string;
+    clipboard: {
+        copier: (text: string) => void;
+    };
+}
+
+interface IconType {
     name: string;
     type: string;
     subtypes: string[];
@@ -66,6 +77,22 @@ const getIcons = async (): Promise<{ generic: IconType[]; brands: IconType[] }> 
     return iconsPromise;
 };
 
+const Icon: React.FC<IconProps> = ({ name, type, subtypes, currentSubtype, size = 18, color = "black", clipboard: { copier } }) => {
+    const copyIconTag = (type: string, subtype: string, name: string) => {
+        copier(`${type === "sharp" ? "fa-sharp " : ""}fa-${subtype} fa-${name}`);
+    };
+
+    return (
+        <Box
+            id="copy"
+            onClick={() => copyIconTag(type, currentSubtype, name)}
+            title={name}
+        >
+            <i className={`${type === "sharp" ? "fa-sharp " : ""}fa-${currentSubtype} fa-${name}`} style={{ fontSize: `${size}px`, color: color }}></i>
+        </Box>
+    );
+};
+
 const PopoverSearchIcon: React.FC<Props> = ({ onSelect, config }) => {
     const [allIcons, setAllIcons] = useState<IconType[]>([]);
     const [search, setSearch] = useState<string>("");
@@ -73,6 +100,7 @@ const PopoverSearchIcon: React.FC<Props> = ({ onSelect, config }) => {
     const [popoverOpened, setPopoverOpened] = useState<boolean>(false);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [loading, setLoading] = useState<boolean>(true);
+    const [iconClicked, setIconClicked] = useState<string | null>(null);
 
     const iconSubtypes = config?.availableStyles || DEFAULT_ICON_SUBTYPES;
     const defaultSubtype = iconSubtypes[0] || DEFAULT_ICON_SUBTYPES[0];
@@ -107,7 +135,12 @@ const PopoverSearchIcon: React.FC<Props> = ({ onSelect, config }) => {
 
     // Use useCallback for handlers
     const handleIconClick = useCallback((iconName: string) => {
-        onSelect?.(iconName);
+        setIconClicked(iconName);
+        setTimeout(() => {
+            setIconClicked(null);
+            onSelect?.(iconName);
+            setPopoverOpened(false);
+        }, 300); // Adjust the timeout duration as needed
     }, [onSelect]);
 
     const paginate = useCallback((pageNumber: number) => {
@@ -251,9 +284,14 @@ const PopoverSearchIcon: React.FC<Props> = ({ onSelect, config }) => {
                             <Grid>
                                 {currentPageIcons.map((icon, i) => (
                                     <Grid.Col span="auto" key={i}>
-                                        <div
+                                        <Box
                                             onClick={() => handleIconClick(icon.name)}
-                                            style={{cursor: "pointer", textAlign: "center"}}
+                                            style={{
+                                                cursor: "pointer",
+                                                textAlign: "center",
+                                                transition: "transform 0.2s",
+                                                transform: iconClicked === icon.name ? "scale(0.9)" : "scale(1)"
+                                            }}
                                         >
                                             <Icon
                                                 name={icon.name}
@@ -262,9 +300,9 @@ const PopoverSearchIcon: React.FC<Props> = ({ onSelect, config }) => {
                                                 color={config?.contentColor}
                                                 subtypes={icon.subtypes}
                                                 currentSubtype={selectedSubtype}
-                                                clipboard={{copier}}
+                                                clipboard={{ copier }}
                                             />
-                                        </div>
+                                        </Box>
                                     </Grid.Col>
                                 ))}
                             </Grid>

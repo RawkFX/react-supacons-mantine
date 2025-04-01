@@ -84,7 +84,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_1 = __importStar(require("react"));
 var core_1 = require("@mantine/core");
-var Icon_1 = __importDefault(require("./components/Icon"));
 var clipboard_1 = __importDefault(require("clipboard"));
 var hooks_1 = require("@mantine/hooks");
 var DEFAULT_ICON_SUBTYPES = ["solid", "regular", "light", "thin", "duotone"];
@@ -123,6 +122,14 @@ var getIcons = function () { return __awaiter(void 0, void 0, void 0, function (
         return [2 /*return*/, iconsPromise];
     });
 }); };
+var Icon = function (_a) {
+    var name = _a.name, type = _a.type, subtypes = _a.subtypes, currentSubtype = _a.currentSubtype, _b = _a.size, size = _b === void 0 ? 18 : _b, _c = _a.color, color = _c === void 0 ? "black" : _c, copier = _a.clipboard.copier;
+    var copyIconTag = function (type, subtype, name) {
+        copier("".concat(type === "sharp" ? "fa-sharp " : "", "fa-").concat(subtype, " fa-").concat(name));
+    };
+    return (react_1.default.createElement(core_1.Box, { id: "copy", onClick: function () { return copyIconTag(type, currentSubtype, name); }, title: name },
+        react_1.default.createElement("i", { className: "".concat(type === "sharp" ? "fa-sharp " : "", "fa-").concat(currentSubtype, " fa-").concat(name), style: { fontSize: "".concat(size, "px"), color: color } })));
+};
 var PopoverSearchIcon = function (_a) {
     var _b, _c;
     var onSelect = _a.onSelect, config = _a.config;
@@ -132,9 +139,10 @@ var PopoverSearchIcon = function (_a) {
     var _f = (0, react_1.useState)(false), popoverOpened = _f[0], setPopoverOpened = _f[1];
     var _g = (0, react_1.useState)(1), currentPage = _g[0], setCurrentPage = _g[1];
     var _h = (0, react_1.useState)(true), loading = _h[0], setLoading = _h[1];
+    var _j = (0, react_1.useState)(null), iconClicked = _j[0], setIconClicked = _j[1];
     var iconSubtypes = (config === null || config === void 0 ? void 0 : config.availableStyles) || DEFAULT_ICON_SUBTYPES;
     var defaultSubtype = iconSubtypes[0] || DEFAULT_ICON_SUBTYPES[0];
-    var _j = (0, react_1.useState)(defaultSubtype), selectedSubtype = _j[0], setSelectedSubtype = _j[1];
+    var _k = (0, react_1.useState)(defaultSubtype), selectedSubtype = _k[0], setSelectedSubtype = _k[1];
     var iconsPerPage = (config === null || config === void 0 ? void 0 : config.resultsPerPage) || DEFAULT_ICONS_PER_PAGE;
     // Memoize filtered icons
     var filteredIcons = (0, react_1.useMemo)(function () {
@@ -165,7 +173,12 @@ var PopoverSearchIcon = function (_a) {
     }, [groupedIcons, selectedSubtype, currentPage, iconsPerPage]);
     // Use useCallback for handlers
     var handleIconClick = (0, react_1.useCallback)(function (iconName) {
-        onSelect === null || onSelect === void 0 ? void 0 : onSelect(iconName);
+        setIconClicked(iconName);
+        setTimeout(function () {
+            setIconClicked(null);
+            onSelect === null || onSelect === void 0 ? void 0 : onSelect(iconName);
+            setPopoverOpened(false);
+        }, 300); // Adjust the timeout duration as needed
     }, [onSelect]);
     var paginate = (0, react_1.useCallback)(function (pageNumber) {
         setCurrentPage(pageNumber);
@@ -231,11 +244,11 @@ var PopoverSearchIcon = function (_a) {
     var buttonContent = (0, react_1.useMemo)(function () {
         if ((config === null || config === void 0 ? void 0 : config.showBothIconAndText) && (config === null || config === void 0 ? void 0 : config.buttonIconName)) {
             return (react_1.default.createElement(react_1.default.Fragment, null,
-                react_1.default.createElement(Icon_1.default, { name: config.buttonIconName, size: config.buttonIconSize, color: config.buttonIconColor, type: "solid", subtypes: [], currentSubtype: "solid", clipboard: { copier: copier } }),
+                react_1.default.createElement(Icon, { name: config.buttonIconName, size: config.buttonIconSize, color: config.buttonIconColor, type: "solid", subtypes: [], currentSubtype: "solid", clipboard: { copier: copier } }),
                 react_1.default.createElement("span", { style: { marginLeft: "10px" } }, (config === null || config === void 0 ? void 0 : config.buttonLabel) || "Select Icon")));
         }
         else if (!(config === null || config === void 0 ? void 0 : config.showBothIconAndText) && (config === null || config === void 0 ? void 0 : config.buttonIconName)) {
-            return (react_1.default.createElement(Icon_1.default, { name: config.buttonIconName, size: config.buttonIconSize, color: config.buttonIconColor, type: "solid", subtypes: [], currentSubtype: "solid", clipboard: { copier: copier } }));
+            return (react_1.default.createElement(Icon, { name: config.buttonIconName, size: config.buttonIconSize, color: config.buttonIconColor, type: "solid", subtypes: [], currentSubtype: "solid", clipboard: { copier: copier } }));
         }
         return (config === null || config === void 0 ? void 0 : config.buttonLabel) || "Select Icon";
     }, [config]);
@@ -261,8 +274,13 @@ var PopoverSearchIcon = function (_a) {
                 !loading && Object.keys(groupedIcons).length > 0 && ((_b = groupedIcons[selectedSubtype]) === null || _b === void 0 ? void 0 : _b.length) > 0 && (react_1.default.createElement(react_1.default.Fragment, null,
                     react_1.default.createElement("h3", null, selectedSubtype.charAt(0).toUpperCase() + selectedSubtype.slice(1)),
                     react_1.default.createElement(core_1.Grid, null, currentPageIcons.map(function (icon, i) { return (react_1.default.createElement(core_1.Grid.Col, { span: "auto", key: i },
-                        react_1.default.createElement("div", { onClick: function () { return handleIconClick(icon.name); }, style: { cursor: "pointer", textAlign: "center" } },
-                            react_1.default.createElement(Icon_1.default, { name: icon.name, type: icon.type, size: config === null || config === void 0 ? void 0 : config.contentSize, color: config === null || config === void 0 ? void 0 : config.contentColor, subtypes: icon.subtypes, currentSubtype: selectedSubtype, clipboard: { copier: copier } })))); })))),
+                        react_1.default.createElement(core_1.Box, { onClick: function () { return handleIconClick(icon.name); }, style: {
+                                cursor: "pointer",
+                                textAlign: "center",
+                                transition: "transform 0.2s",
+                                transform: iconClicked === icon.name ? "scale(0.9)" : "scale(1)"
+                            } },
+                            react_1.default.createElement(Icon, { name: icon.name, type: icon.type, size: config === null || config === void 0 ? void 0 : config.contentSize, color: config === null || config === void 0 ? void 0 : config.contentColor, subtypes: icon.subtypes, currentSubtype: selectedSubtype, clipboard: { copier: copier } })))); })))),
                 !loading && (filteredIcons.length === 0 || allIcons.length === 0) && (react_1.default.createElement(core_1.Box, { style: { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" } },
                     react_1.default.createElement("h3", null, (config === null || config === void 0 ? void 0 : config.noIconsFoundText) || "No icons found"))),
                 !loading && Object.keys(groupedIcons).length > 0 && (react_1.default.createElement(core_1.Grid, { justify: "center", style: { paddingTop: "5%" } },
@@ -276,16 +294,16 @@ var PopoverSearchIcon = function (_a) {
                                     backgroundColor: subtype === selectedSubtype ? "lightgray" : "transparent"
                                 }, onClick: function () { return handleSubtypeChange(subtype); } }, allIcons
                                 .filter(function (icon) { return icon.name === iconName && icon.subtypes.includes(subtype); })
-                                .map(function (icon, i) { return (react_1.default.createElement(Icon_1.default, { key: i, name: icon.name, type: icon.type, size: config === null || config === void 0 ? void 0 : config.contentSize, color: config === null || config === void 0 ? void 0 : config.contentColor, subtypes: icon.subtypes, currentSubtype: subtype, clipboard: { copier: copier } })); }))));
+                                .map(function (icon, i) { return (react_1.default.createElement(Icon, { key: i, name: icon.name, type: icon.type, size: config === null || config === void 0 ? void 0 : config.contentSize, color: config === null || config === void 0 ? void 0 : config.contentColor, subtypes: icon.subtypes, currentSubtype: subtype, clipboard: { copier: copier } })); }))));
                     }),
                     react_1.default.createElement(core_1.Divider, { style: { width: "100%" } }))),
                 !loading && filteredIcons.length > iconsPerPage && (react_1.default.createElement("div", { style: { display: "flex", justifyContent: "space-around", paddingTop: "5%" } },
                     react_1.default.createElement(core_1.Button, { style: { backgroundColor: config === null || config === void 0 ? void 0 : config.buttonColor }, onClick: function () { return paginate(currentPage - 1); }, disabled: currentPage === 1 }, allIcons
                         .filter(function (icon) { return icon.name === "arrow-left-to-arc"; })
-                        .map(function (icon, i) { return (react_1.default.createElement(Icon_1.default, { key: i, name: icon.name, type: icon.type, size: config === null || config === void 0 ? void 0 : config.contentSize, color: config === null || config === void 0 ? void 0 : config.buttonIconColor, subtypes: icon.subtypes, currentSubtype: "solid", clipboard: { copier: copier } })); })),
+                        .map(function (icon, i) { return (react_1.default.createElement(Icon, { key: i, name: icon.name, type: icon.type, size: config === null || config === void 0 ? void 0 : config.contentSize, color: config === null || config === void 0 ? void 0 : config.buttonIconColor, subtypes: icon.subtypes, currentSubtype: "solid", clipboard: { copier: copier } })); })),
                     react_1.default.createElement("span", null, ((_c = config === null || config === void 0 ? void 0 : config.paginationLabel) === null || _c === void 0 ? void 0 : _c.replace("%d", currentPage.toString()).replace("%s", Math.ceil(filteredIcons.length / iconsPerPage).toString())) || "Page ".concat(currentPage, " of ").concat(Math.ceil(filteredIcons.length / iconsPerPage))),
                     react_1.default.createElement(core_1.Button, { style: { backgroundColor: config === null || config === void 0 ? void 0 : config.buttonColor }, onClick: function () { return paginate(currentPage + 1); }, disabled: currentPage * iconsPerPage >= filteredIcons.length }, allIcons
                         .filter(function (icon) { return icon.name === "arrow-right-to-arc"; })
-                        .map(function (icon, i) { return (react_1.default.createElement(Icon_1.default, { key: i, name: icon.name, type: icon.type, size: config === null || config === void 0 ? void 0 : config.contentSize, color: config === null || config === void 0 ? void 0 : config.buttonIconColor, subtypes: icon.subtypes, currentSubtype: "solid", clipboard: { copier: copier } })); }))))))));
+                        .map(function (icon, i) { return (react_1.default.createElement(Icon, { key: i, name: icon.name, type: icon.type, size: config === null || config === void 0 ? void 0 : config.contentSize, color: config === null || config === void 0 ? void 0 : config.buttonIconColor, subtypes: icon.subtypes, currentSubtype: "solid", clipboard: { copier: copier } })); }))))))));
 };
 exports.default = PopoverSearchIcon;
