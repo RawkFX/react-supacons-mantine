@@ -266,12 +266,14 @@ const PopoverSearchIcon: React.FC<Props> = ({onSelect, config}) => {
         <Popover
             shadow="md"
             width={500}
+            defaultOpened={false}
+            opened={popoverOpened}
             onOpen={handlePopoverOpen}
             onClose={handlePopoverClose}
             position="bottom-start"
         >
             <Popover.Target>
-                <Button style={{backgroundColor: config?.buttonColor}}>{buttonContent}</Button>
+                <Button style={{backgroundColor: config?.buttonColor}} onClick={() => setPopoverOpened((o) => !o)}>{buttonContent}</Button>
             </Popover.Target>
 
             <Popover.Dropdown>
