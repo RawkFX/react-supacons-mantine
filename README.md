@@ -11,17 +11,19 @@ React Supacons Mantine is a React component library that integrates with the Sup
 
 ## Installation
 
-To install the library, use npm or yarn:
+To install the library, use the following command:
 
 ```bash
-  npm install react-supacons-mantine
+  npx react-supacons-mantine -h # To see the help message
+  npx react-supacons-mantine add -h # To see the help message for the add command
+  npx react-supacons-mantine add [component] # To add a specific component to your project
 ```
 
-or
+## Available Components
 
-```bash
-  yarn add react-supacons-mantine
-```
+| Component           | Type      | Command                                          | Description                                                                                                            |
+|---------------------|-----------|--------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
+| `PopoverSearchIcon` | component | npx react-supacons-mantine add PopoverSearchIcon | The PopoverSearchIcon component is a React component that provides a searchable popover interface for selecting icons. |
 
 ## Usage
 
@@ -30,7 +32,7 @@ To use the `PopoverSearchIcon` component, import it into your React application:
 ```typescript jsx
 import React from 'react';
 import { MantineProvider } from '@mantine/core';
-import PopoverSearchIcon from 'react-supacons-mantine';
+import PopoverSearchIcon from './components/PopoverSearchIcon';
 
 const App = () => {
   const handleIconSelect = (iconName: string) => {
@@ -54,7 +56,7 @@ To use the `PopoverSearchIcon` component with a configuration object:
 ```typescript jsx
 import React, {useState} from 'react';
 import {MantineProvider} from '@mantine/core';
-import PopoverSearchIcon from 'react-supacons-mantine';
+import PopoverSearchIcon from './components/PopoverSearchIcon';
 
 const App = () => {
     const [isDarkMode, setIsDarkMode] = useState(false);
@@ -126,8 +128,7 @@ export default App;
 To build and test the library locally, use the following commands:
 
 ```bash
-  npm run build # Build the library
-  npm test # Run tests
+  npm run test # Run tests
 ```
 
 ## License
@@ -155,3 +156,4 @@ For bug reports, please visit the [issues page](https://github.com/RawkFX/react-
 - react 18
 - mantine v6
 - supacons core
+

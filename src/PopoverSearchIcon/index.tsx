@@ -1,8 +1,7 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { Box, Button, Divider, Grid, Input, Loader, Popover } from "@mantine/core";
-import Icon from "./components/Icon";
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import {Box, Button, Divider, Grid, Input, Loader, Popover} from "@mantine/core";
 import Clipboard from "clipboard";
-import { useDebouncedValue } from "@mantine/hooks";
+import {useDebouncedValue} from "@mantine/hooks";
 
 interface Props {
     onSelect?: (iconName: string) => void;
@@ -20,6 +19,18 @@ interface Props {
         buttonColor?: string;
         showBothIconAndText?: boolean;
         noIconsFoundText?: string;
+    };
+}
+
+interface IconProps {
+    name: string;
+    type: string;
+    subtypes: string[];
+    currentSubtype: string;
+    size?: number;
+    color?: string;
+    clipboard: {
+        copier: (text: string) => void;
     };
 }
 
@@ -45,8 +56,8 @@ let iconsPromise: Promise<{ generic: IconType[]; brands: IconType[] }> | null = 
 const getIcons = async (): Promise<{ generic: IconType[]; brands: IconType[] }> => {
     if (!iconsPromise) {
         iconsPromise = Promise.all([
-            import("./icons/generic_icons.json"),
-            import("./icons/brand_icons.json")
+            import("./dist/icons/generic_icons.json"),
+            import("./dist/icons/brand_icons.json")
         ]).then(([genericModule, brandModule]) => {
             const generic_icons = genericModule.default;
             const brand_icons = brandModule.default;
@@ -66,13 +77,39 @@ const getIcons = async (): Promise<{ generic: IconType[]; brands: IconType[] }> 
     return iconsPromise;
 };
 
-const PopoverSearchIcon: React.FC<Props> = ({ onSelect, config }) => {
+const Icon: React.FC<IconProps> = ({
+                                       name,
+                                       type,
+                                       subtypes,
+                                       currentSubtype,
+                                       size = 18,
+                                       color = "black",
+                                       clipboard: {copier}
+                                   }) => {
+    const copyIconTag = (type: string, subtype: string, name: string) => {
+        copier(`${type === "sharp" ? "fa-sharp " : ""}fa-${subtype} fa-${name}`);
+    };
+
+    return (
+        <Box
+            id="copy"
+            onClick={() => copyIconTag(type, currentSubtype, name)}
+            title={name}
+        >
+            <i className={`${type === "sharp" ? "fa-sharp " : ""}fa-${currentSubtype} fa-${name}`}
+               style={{fontSize: `${size}px`, color: color}}></i>
+        </Box>
+    );
+};
+
+const PopoverSearchIcon: React.FC<Props> = ({onSelect, config}) => {
     const [allIcons, setAllIcons] = useState<IconType[]>([]);
     const [search, setSearch] = useState<string>("");
     const [debouncedSearch] = useDebouncedValue(search, 500);
     const [popoverOpened, setPopoverOpened] = useState<boolean>(false);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [loading, setLoading] = useState<boolean>(true);
+    const [iconClicked, setIconClicked] = useState<string | null>(null);
 
     const iconSubtypes = config?.availableStyles || DEFAULT_ICON_SUBTYPES;
     const defaultSubtype = iconSubtypes[0] || DEFAULT_ICON_SUBTYPES[0];
@@ -82,7 +119,7 @@ const PopoverSearchIcon: React.FC<Props> = ({ onSelect, config }) => {
     // Memoize filtered icons
     const filteredIcons = useMemo(() => {
         const searchTerm = debouncedSearch.toLowerCase().replace(/[-_\s]/g, "");
-        return allIcons.filter(({ name }) => name.toLowerCase().includes(searchTerm));
+        return allIcons.filter(({name}) => name.toLowerCase().includes(searchTerm));
     }, [debouncedSearch, allIcons]);
 
     // Memoize grouped icons by subtype
@@ -107,7 +144,12 @@ const PopoverSearchIcon: React.FC<Props> = ({ onSelect, config }) => {
 
     // Use useCallback for handlers
     const handleIconClick = useCallback((iconName: string) => {
-        onSelect?.(iconName);
+        setIconClicked(iconName);
+        setTimeout(() => {
+            setIconClicked(null);
+            onSelect?.(iconName);
+            setPopoverOpened(false);
+        }, 300); // Adjust the timeout duration as needed
     }, [onSelect]);
 
     const paginate = useCallback((pageNumber: number) => {
@@ -186,9 +228,9 @@ const PopoverSearchIcon: React.FC<Props> = ({ onSelect, config }) => {
                         type="solid"
                         subtypes={[]}
                         currentSubtype="solid"
-                        clipboard={{ copier }}
+                        clipboard={{copier}}
                     />
-                    <span style={{ marginLeft: "10px" }}>{config?.buttonLabel || "Select Icon"}</span>
+                    <span style={{marginLeft: "10px"}}>{config?.buttonLabel || "Select Icon"}</span>
                 </>
             );
         } else if (!config?.showBothIconAndText && config?.buttonIconName) {
@@ -200,7 +242,7 @@ const PopoverSearchIcon: React.FC<Props> = ({ onSelect, config }) => {
                     type="solid"
                     subtypes={[]}
                     currentSubtype="solid"
-                    clipboard={{ copier }}
+                    clipboard={{copier}}
                 />
             );
         }
@@ -224,12 +266,14 @@ const PopoverSearchIcon: React.FC<Props> = ({ onSelect, config }) => {
         <Popover
             shadow="md"
             width={500}
+            defaultOpened={false}
+            opened={popoverOpened}
             onOpen={handlePopoverOpen}
             onClose={handlePopoverClose}
             position="bottom-start"
         >
             <Popover.Target>
-                <Button style={{ backgroundColor: config?.buttonColor }}>{buttonContent}</Button>
+                <Button style={{backgroundColor: config?.buttonColor}} onClick={() => setPopoverOpened((o) => !o)}>{buttonContent}</Button>
             </Popover.Target>
 
             <Popover.Dropdown>
@@ -240,7 +284,8 @@ const PopoverSearchIcon: React.FC<Props> = ({ onSelect, config }) => {
                 />
                 <Box style={{position: "relative", width: "100%", minHeight: "20vh"}}>
                     {loading && (
-                        <Box style={{position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)"}}>
+                        <Box
+                            style={{position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)"}}>
                             <Loader/>
                         </Box>
                     )}
@@ -251,9 +296,14 @@ const PopoverSearchIcon: React.FC<Props> = ({ onSelect, config }) => {
                             <Grid>
                                 {currentPageIcons.map((icon, i) => (
                                     <Grid.Col span="auto" key={i}>
-                                        <div
+                                        <Box
                                             onClick={() => handleIconClick(icon.name)}
-                                            style={{cursor: "pointer", textAlign: "center"}}
+                                            style={{
+                                                cursor: "pointer",
+                                                textAlign: "center",
+                                                transition: "transform 0.2s",
+                                                transform: iconClicked === icon.name ? "scale(0.9)" : "scale(1)"
+                                            }}
                                         >
                                             <Icon
                                                 name={icon.name}
@@ -264,7 +314,7 @@ const PopoverSearchIcon: React.FC<Props> = ({ onSelect, config }) => {
                                                 currentSubtype={selectedSubtype}
                                                 clipboard={{copier}}
                                             />
-                                        </div>
+                                        </Box>
                                     </Grid.Col>
                                 ))}
                             </Grid>
@@ -272,7 +322,8 @@ const PopoverSearchIcon: React.FC<Props> = ({ onSelect, config }) => {
                     )}
 
                     {!loading && (filteredIcons.length === 0 || allIcons.length === 0) && (
-                        <Box style={{position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)"}}>
+                        <Box
+                            style={{position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)"}}>
                             <h3>{config?.noIconsFoundText || "No icons found"}</h3>
                         </Box>
                     )}
@@ -280,7 +331,7 @@ const PopoverSearchIcon: React.FC<Props> = ({ onSelect, config }) => {
                     {!loading && Object.keys(groupedIcons).length > 0 && (
                         <Grid justify="center" style={{paddingTop: "5%"}}>
                             <Divider style={{width: "100%"}}/>
-                            {subtypeIndicatorIcons.map(({ subtype, iconName }) => (
+                            {subtypeIndicatorIcons.map(({subtype, iconName}) => (
                                 <Grid.Col span={1} key={subtype}>
                                     <Box
                                         style={{
@@ -314,7 +365,7 @@ const PopoverSearchIcon: React.FC<Props> = ({ onSelect, config }) => {
                     {!loading && filteredIcons.length > iconsPerPage && (
                         <div style={{display: "flex", justifyContent: "space-around", paddingTop: "5%"}}>
                             <Button
-                                style={{ backgroundColor: config?.buttonColor }}
+                                style={{backgroundColor: config?.buttonColor}}
                                 onClick={() => paginate(currentPage - 1)}
                                 disabled={currentPage === 1}
                             >
@@ -337,7 +388,7 @@ const PopoverSearchIcon: React.FC<Props> = ({ onSelect, config }) => {
                                 {config?.paginationLabel?.replace("%d", currentPage.toString()).replace("%s", Math.ceil(filteredIcons.length / iconsPerPage).toString()) || `Page ${currentPage} of ${Math.ceil(filteredIcons.length / iconsPerPage)}`}
                             </span>
                             <Button
-                                style={{ backgroundColor: config?.buttonColor }}
+                                style={{backgroundColor: config?.buttonColor}}
                                 onClick={() => paginate(currentPage + 1)}
                                 disabled={currentPage * iconsPerPage >= filteredIcons.length}
                             >

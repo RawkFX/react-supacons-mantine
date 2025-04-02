@@ -1,24 +1,21 @@
 {
   "name": "react-supacons-mantine",
-  "version": "1.0.4",
+  "version": "1.1.7",
   "description": "React icon selector component that integrates with the Supacons Core Icon Library",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./lib/index.js",
   "scripts": {
-    "build": "jest && tsc --declaration --emitDeclarationOnly && tsc && cp -r src/dist/css dist/dist/css",
     "test": "jest"
   },
-  "files": [
-    "dist/**/*",
-    "dist/css/**/*"
-  ],
+  "bin": {
+    "react-supacons-mantine": "./bin/index.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/RawkFX/react-supacons-mantine.git"
   },
   "keywords": [
     "react 18",
-    "matine v6",
+    "mantine v6",
     "supacons core"
   ],
   "author": "Răzvan",
@@ -28,14 +25,16 @@
   },
   "homepage": "https://github.com/RawkFX/react-supacons-mantine#readme",
   "dependencies": {
-    "@emotion/react": "^11.14.0",
-    "@mantine/core": "^7.17.3",
-    "@mantine/hooks": "^7.17.3",
-    "clipboard": "^2.0.11",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "commander": "^9.4.0"
   },
   "devDependencies": {
+    "@emotion/react": "^11.14.0",
+    "@mantine/core": "^6.0.21",
+    "@mantine/hooks": "^6.0.21",
+    "clipboard": "^2.0.11",
+    "clsx": "^2.1.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "@babel/core": "^7.26.10",
     "@babel/preset-env": "^7.26.9",
     "@babel/preset-react": "^7.26.3",
@@ -43,12 +42,16 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@types/jest": "^29.5.14",
-    "@types/node": "^22.13.14",
-    "@types/react": "^19.0.12",
-    "@types/react-dom": "^19.0.4",
+    "@types/node": "16.18.108",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "18.3.1",
     "babel-jest": "^29.7.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
-    "typescript": "^5.8.2"
+    "tslib": "^2.6.3",
+    "typescript": "4.9.5"
+  },
+  "engines": {
+    "node": ">=12.0.0"
   }
 }

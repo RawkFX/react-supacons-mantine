@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { MantineProvider } from '@mantine/core';
-import PopoverSearchIcon from './dist';
+import PopoverSearchIcon from './PopoverSearchIcon';
 
 const renderWithMantineProvider = (ui: React.ReactElement) => {
     return render(<MantineProvider>{ui}</MantineProvider>);
