@@ -40,7 +40,7 @@ interface IconType {
     subtypes: string[];
 }
 
-const DEFAULT_ICON_SUBTYPES = ["solid", "regular", "light", "thin", "duotone", "brands"];
+const DEFAULT_ICON_SUBTYPES = ["solid", "regular", "light", "thin", "duotone"];
 const DEFAULT_ICONS_PER_PAGE = 48;
 
 // Move this outside component to avoid recreation on each render
@@ -143,14 +143,15 @@ const PopoverSearchIcon: React.FC<Props> = ({onSelect, config}) => {
     }, [groupedIcons, selectedSubtype, currentPage, iconsPerPage]);
 
     // Use useCallback for handlers
-    const handleIconClick = useCallback((iconName: string) => {
-        setIconClicked(iconName);
+    const handleIconClick = useCallback((icon: IconType) => {
+        const className = `${icon.type === "sharp" ? "fa-sharp " : ""}fa-${selectedSubtype} fa-${icon.name}`;
+        setIconClicked(icon.name);
         setTimeout(() => {
             setIconClicked(null);
-            onSelect?.(iconName);
+            onSelect?.(className); // Return the full className
             setPopoverOpened(false);
         }, 300); // Adjust the timeout duration as needed
-    }, [onSelect]);
+    }, [onSelect, selectedSubtype]);
 
     const paginate = useCallback((pageNumber: number) => {
         setCurrentPage(pageNumber);
@@ -298,9 +299,9 @@ const PopoverSearchIcon: React.FC<Props> = ({onSelect, config}) => {
                             <h3>{selectedSubtype.charAt(0).toUpperCase() + selectedSubtype.slice(1)}</h3>
                             <Grid>
                                 {currentPageIcons.map((icon, i) => (
-                                    <Grid.Col span="auto" key={i}>
+                                    <Grid.Col span={1} key={i}>
                                         <Box
-                                            onClick={() => handleIconClick(icon.name)}
+                                            onClick={() => handleIconClick(icon)}
                                             style={{
                                                 cursor: "pointer",
                                                 textAlign: "center",
