@@ -40,7 +40,7 @@ interface IconType {
     subtypes: string[];
 }
 
-const DEFAULT_ICON_SUBTYPES = ["solid", "regular", "light", "thin", "duotone"];
+const DEFAULT_ICON_SUBTYPES = ["solid", "regular", "light", "thin", "duotone", "brands"];
 const DEFAULT_ICONS_PER_PAGE = 48;
 
 // Move this outside component to avoid recreation on each render
@@ -256,11 +256,13 @@ const PopoverSearchIcon: React.FC<Props> = ({onSelect, config}) => {
             default: "apartment"
         };
 
-        return Object.keys(groupedIcons).map(subtype => ({
+        const availableSubtypes = config?.availableStyles || Object.keys(groupedIcons);
+
+        return availableSubtypes.map(subtype => ({
             subtype,
             iconName: subtype === "brands" ? indicators.brands : indicators.default
         }));
-    }, [groupedIcons]);
+    }, [groupedIcons, config?.availableStyles]);
 
     return (
         <Popover
@@ -271,6 +273,7 @@ const PopoverSearchIcon: React.FC<Props> = ({onSelect, config}) => {
             onOpen={handlePopoverOpen}
             onClose={handlePopoverClose}
             position="bottom-start"
+            withinPortal={true}
         >
             <Popover.Target>
                 <Button style={{backgroundColor: config?.buttonColor}} onClick={() => setPopoverOpened((o) => !o)}>{buttonContent}</Button>

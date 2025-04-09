@@ -54,8 +54,8 @@ export default App;
 To use the `PopoverSearchIcon` component with a configuration object:
 
 ```typescript jsx
-import React, {useState} from 'react';
-import {MantineProvider} from '@mantine/core';
+import React, { useState } from 'react';
+import { MantineProvider } from '@mantine/core';
 import PopoverSearchIcon from './components/PopoverSearchIcon';
 
 const App = () => {
