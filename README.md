@@ -56,7 +56,7 @@ To use the `PopoverSearchIcon` component with a configuration object:
 ```typescript jsx
 import React, { useState } from 'react';
 import { MantineProvider } from '@mantine/core';
-import PopoverSearchIcon from './components/PopoverSearchIcon';
+import PopoverSearchIcon, { PopoverSearchIconConfig } from './components/PopoverSearchIcon';
 
 const App = () => {
     const [isDarkMode, setIsDarkMode] = useState(false);
@@ -65,7 +65,7 @@ const App = () => {
         console.log(`Selected icon: ${iconName}`);
     };
 
-    const config = {
+    const config: PopoverSearchIconConfig = {
         resultsPerPage: 52,
         availableStyles: ["solid", "sharp"],
         contentColor: isDarkMode ? "#fff" : "#000",
@@ -93,35 +93,36 @@ export default App;
 
 ### Example with and without configuration
 
-| Not Configured | Configured |
-|----------------|------------|
+| Not Configured                                         | Configured                                         |
+|--------------------------------------------------------|----------------------------------------------------|
 | ![Before](./public/PopoverSearchIconNotConfigured.png) | ![After](./public/PopoverSearchIconConfigured.png) |
 
 ## Props
 
 ### `PopoverSearchIcon`
 
-| Prop       | Type     | Description                                                                 |
-|------------|----------|-----------------------------------------------------------------------------|
-| `onSelect` | function | Callback function that is called when an icon is selected.                  |
-| `config`   | object   | Configuration object for customizing the component's behavior and appearance.|
+| Prop       | Type     | Description                                                                   |
+|------------|----------|-------------------------------------------------------------------------------|
+| `onSelect` | function | Callback function that is called when an icon is selected.                    |
+| `config`   | object   | Configuration object for customizing the component's behavior and appearance. |
 
 ### `config` Object
 
-| Property                | Type     | Description                                                                 |
-|-------------------------|----------|-----------------------------------------------------------------------------|
-| `resultsPerPage`        | number   | Number of icons to display per page.                                        |
-| `availableStyles`       | string[] | Array of available icon styles.                                             |
-| `contentColor`          | string   | Color of the icons.                                                         |
-| `contentSize`           | number   | Size of the icons.                                                          |
-| `buttonLabel`           | string   | Label for the button that opens the popover.                                |
-| `buttonIconName`        | string   | Name of the icon to display on the button.                                  |
-| `buttonIconSize`        | number   | Size of the icon on the button.                                             |
-| `buttonIconColor`       | string   | Color of the icon on the button.                                            |
-| `buttonColor`           | string   | Background color of the button.                                             |
-| `showBothIconAndText`   | boolean  | Whether to show both icon and text on the button.                           |
-| `noIconsFoundText`      | string   | Text to display when no icons are found.                                    |
-| `paginationText`        | string   | Text to display for pagination, use `%d` for current page and `%s` for total pages.|
+| Property              | Type      | Description                                                                                                                 |
+|-----------------------|-----------|-----------------------------------------------------------------------------------------------------------------------------|
+| `resultsPerPage`      | number    | Number of icons to display per page.                                                                                        |
+| `availableStyles`     | string[]  | Array of available icon styles.                                                                                             |
+| `contentColor`        | string    | Color of the icons.                                                                                                         |
+| `contentSize`         | number    | Size of the icons.                                                                                                          |
+| `buttonNode`          | ReactNode | Custom React node to replace the default button. Allows for complete customization of the button's appearance and behavior. |
+| `buttonLabel`         | string    | Label for the button that opens the popover.                                                                                |
+| `buttonIconName`      | string    | Name of the icon to display on the button.                                                                                  |
+| `buttonIconSize`      | number    | Size of the icon on the button.                                                                                             |
+| `buttonIconColor`     | string    | Color of the icon on the button.                                                                                            |
+| `buttonColor`         | string    | Background color of the button.                                                                                             |
+| `showBothIconAndText` | boolean   | Whether to show both icon and text on the button.                                                                           |
+| `noIconsFoundText`    | string    | Text to display when no icons are found.                                                                                    |
+| `paginationText`      | string    | Text to display for pagination, use `%d` for current page and `%s` for total pages.                                         |
 
 ## Development
 
