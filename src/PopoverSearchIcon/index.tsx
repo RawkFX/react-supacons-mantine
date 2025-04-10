@@ -222,7 +222,7 @@ const PopoverSearchIcon: React.FC<PopoverSearchIconProps> = ({onSelect, config})
 
     // Memoize the button content
     const buttonContent = useMemo(() => {
-        if (config?.showBothIconAndText && config?.buttonIconName && config?.buttonNode) {
+        if (config?.buttonNode) {
             return config?.buttonNode;
         } else if (config?.showBothIconAndText && config?.buttonIconName && !config?.buttonNode) {
             return (
@@ -282,7 +282,11 @@ const PopoverSearchIcon: React.FC<PopoverSearchIconProps> = ({onSelect, config})
             withinPortal={true}
         >
             <Popover.Target>
-                <Button style={{backgroundColor: config?.buttonColor, ...(config?.buttonNode && {all: "unset"})}} onClick={() => setPopoverOpened((o) => !o)}>{buttonContent}</Button>
+                {config?.buttonNode ? (
+                    <Box onClick={() => setPopoverOpened((o) => !o)}>{buttonContent}</Box>
+                ) : (
+                    <Button style={{backgroundColor: config?.buttonColor}} onClick={() => setPopoverOpened((o) => !o)}>{buttonContent}</Button>
+                )}
             </Popover.Target>
 
             <Popover.Dropdown>
