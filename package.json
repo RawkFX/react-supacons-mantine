@@ -1,7 +1,7 @@
 {
   "name": "react-supacons-mantine",
-  "version": "1.1.9",
-  "description": "React icon selector component that integrates with the Supacons Core Icon Library",
+  "version": "1.2.0",
+  "description": "React icon selector component that integrates with the Supacons Core Icon Library and Mantine UI.",
   "main": "./lib/index.js",
   "scripts": {
     "test": "jest"

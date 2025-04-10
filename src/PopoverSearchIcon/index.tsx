@@ -3,23 +3,26 @@ import {Box, Button, Divider, Grid, Input, Loader, Popover} from "@mantine/core"
 import Clipboard from "clipboard";
 import {useDebouncedValue} from "@mantine/hooks";
 
-interface Props {
+export interface PopoverSearchIconConfig {
+    resultsPerPage?: number;
+    availableStyles?: string[];
+    contentColor?: string;
+    contentSize?: number;
+    searchLabel?: string;
+    paginationLabel?: string;
+    buttonNode?: React.ReactNode;
+    buttonLabel?: string;
+    buttonIconName?: string;
+    buttonIconSize?: number;
+    buttonIconColor?: string;
+    buttonColor?: string;
+    showBothIconAndText?: boolean;
+    noIconsFoundText?: string;
+}
+
+interface PopoverSearchIconProps {
     onSelect?: (iconName: string) => void;
-    config?: {
-        resultsPerPage?: number;
-        availableStyles?: string[];
-        contentColor?: string;
-        contentSize?: number;
-        searchLabel?: string;
-        paginationLabel?: string;
-        buttonLabel?: string;
-        buttonIconName?: string;
-        buttonIconSize?: number;
-        buttonIconColor?: string;
-        buttonColor?: string;
-        showBothIconAndText?: boolean;
-        noIconsFoundText?: string;
-    };
+    config?: PopoverSearchIconConfig;
 }
 
 interface IconProps {
@@ -40,7 +43,7 @@ interface IconType {
     subtypes: string[];
 }
 
-const DEFAULT_ICON_SUBTYPES = ["solid", "regular", "light", "thin", "duotone"];
+const DEFAULT_ICON_SUBTYPES = ["solid", "regular", "light", "thin", "duotone", "brands"];
 const DEFAULT_ICONS_PER_PAGE = 48;
 
 // Move this outside component to avoid recreation on each render
@@ -102,7 +105,7 @@ const Icon: React.FC<IconProps> = ({
     );
 };
 
-const PopoverSearchIcon: React.FC<Props> = ({onSelect, config}) => {
+const PopoverSearchIcon: React.FC<PopoverSearchIconProps> = ({onSelect, config}) => {
     const [allIcons, setAllIcons] = useState<IconType[]>([]);
     const [search, setSearch] = useState<string>("");
     const [debouncedSearch] = useDebouncedValue(search, 500);
@@ -219,7 +222,9 @@ const PopoverSearchIcon: React.FC<Props> = ({onSelect, config}) => {
 
     // Memoize the button content
     const buttonContent = useMemo(() => {
-        if (config?.showBothIconAndText && config?.buttonIconName) {
+        if (config?.showBothIconAndText && config?.buttonIconName && config?.buttonNode) {
+            return config?.buttonNode;
+        } else if (config?.showBothIconAndText && config?.buttonIconName && !config?.buttonNode) {
             return (
                 <>
                     <Icon
@@ -277,7 +282,7 @@ const PopoverSearchIcon: React.FC<Props> = ({onSelect, config}) => {
             withinPortal={true}
         >
             <Popover.Target>
-                <Button style={{backgroundColor: config?.buttonColor}} onClick={() => setPopoverOpened((o) => !o)}>{buttonContent}</Button>
+                <Button style={{backgroundColor: config?.buttonColor, ...(config?.buttonNode && {all: "unset"})}} onClick={() => setPopoverOpened((o) => !o)}>{buttonContent}</Button>
             </Popover.Target>
 
             <Popover.Dropdown>
