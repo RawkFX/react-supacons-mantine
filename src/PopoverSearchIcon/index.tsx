@@ -43,7 +43,7 @@ interface IconType {
     subtypes: string[];
 }
 
-const DEFAULT_ICON_SUBTYPES = ["solid", "regular", "light", "thin", "duotone", "brands"];
+const DEFAULT_ICON_SUBTYPES = ["solid", "regular", "light", "thin", "duotone"];
 const DEFAULT_ICONS_PER_PAGE = 48;
 
 // Move this outside component to avoid recreation on each render
