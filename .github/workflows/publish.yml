@@ -18,6 +18,12 @@ jobs:
         with:
           node-version: "18"
           cache: "npm"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Configure npm
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+          echo "always-auth=true" >> ~/.npmrc
 
       - name: Install dependencies
         run: npm install
